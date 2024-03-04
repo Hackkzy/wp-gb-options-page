@@ -26,6 +26,9 @@ if ( ! class_exists( 'WPGB_Option_Page_Admin' ) ) {
 		public function __construct() {
 			// Register a custom menu page for our settings.
 			add_action( 'admin_menu', array( $this, 'wpgb_op_admin_menu' ) );
+
+			// Enqueue custom scripts.
+			add_action( 'admin_enqueue_scripts', array( $this, 'wpgb_op_enqueue_scripts' ) );
 		}
 
 		/**
@@ -56,6 +59,36 @@ if ( ! class_exists( 'WPGB_Option_Page_Admin' ) ) {
 				<div id="wpgb-settings"></div>
 			</div>
 			<?php
+		}
+
+		/**
+		 * Enqueue custom admin scripts.
+		 *
+		 * @param string $hook_suffix The current admin page.
+		 * @return void
+		 */
+		public function wpgb_op_enqueue_scripts( $hook_suffix ) {
+			if ( 'toplevel_page_wpgb-options-page' !== $hook_suffix ) {
+				return;
+			}
+
+			// Automatically load imported dependencies and assets version.
+			$asset_file = include trailingslashit( WPGB_OP_PATH ) . 'build/index.asset.php';
+
+			// Enqueue CSS dependencies.
+			foreach ( $asset_file['dependencies'] as $style ) {
+				wp_enqueue_style( $style );
+			}
+
+			// Load our app.js.
+			wp_register_script(
+				'wpgb-settings-script',
+				trailingslashit( WPGB_OP_URL ) . 'build/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+			wp_enqueue_script( 'wpgb-settings-script' );
 		}
 	}
 	new WPGB_Option_Page_Admin();
